@@ -926,6 +926,19 @@ class TopicEventSource(FolderEventSource):
             start = request.get('start')
         _args['start'] = {'query': DateTime(end), 'range':'max'}
         _args['end'] = {'query': DateTime(start), 'range':'min'}
+        if _args.has_key('path'):
+            if  hasattr(context,"getRawQuery"):
+                for criteria in context.getRawQuery():
+                    if criteria['i'] == 'path' and criteria['o'] == 'plone.app.querystring.operation.string.relativePath':
+                        obj = self.context.restrictedTraverse(_args['path'])
+                        objPhysicalPath = obj.getPhysicalPath()
+                        path = "/".join(objPhysicalPath)
+                    if  criteria['i'] == 'path' and criteria['o'] == 'plone.app.querystring.operation.string.path':
+                        portal_state = getMultiAdapter((context, request), name=u'plone_portal_state')
+                        site = portal_state.portal()
+                        site_path = "/".join(site.getPhysicalPath())
+                        path = site_path + _args['path']
+                _args['path'] = path
         if getattr(self.calendar, 'overrideStateForAdmin', True) \
            and _args.has_key('review_state'):
             pm = getToolByName(context, 'portal_membership')
